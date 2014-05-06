@@ -1,4 +1,4 @@
-opendaylight-java-rest-client
+OpenDayLight Java REST Client
 =============================
+Java REST client for AD SAL based Northbound APIs.
 
-Java REST client for AD SAL based Northbound APIs
