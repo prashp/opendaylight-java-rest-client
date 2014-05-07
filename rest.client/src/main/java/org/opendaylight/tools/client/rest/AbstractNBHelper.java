@@ -17,8 +17,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.opendaylight.controller.sal.core.Property;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
@@ -34,6 +32,8 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.client.filter.LoggingFilter;
+
+import org.opendaylight.controller.sal.core.Property;
 
 public abstract class AbstractNBHelper {
 
@@ -67,10 +67,9 @@ public abstract class AbstractNBHelper {
 
   private static Set<Class> getAllTypes() {
     Set<Class> result = new HashSet<Class>();
-    Class propCls = org.opendaylight.controller.sal.core.Property.class;
-    ClassLoader loader = propCls.getClassLoader();
-    URL url = propCls.getProtectionDomain().getCodeSource().getLocation();
     try {
+      ClassLoader loader = Property.class.getClassLoader();
+      URL url = Property.class.getProtectionDomain().getCodeSource().getLocation();
       ZipInputStream zip = new ZipInputStream(new FileInputStream(url.getFile()));
       for(ZipEntry entry = zip.getNextEntry(); entry!=null; entry=zip.getNextEntry()) {
         String name = entry.getName();
@@ -125,8 +124,12 @@ public abstract class AbstractNBHelper {
     throw new UnsupportedOperationException("Unimplemented");
   }
 
+  public void log(String msg) {
+    if (_config.isVerbose()) System.out.println(msg);
+  }
+
   private ContextResolver<JAXBContext> createResolver(final Set<Class> types) {
-    System.out.println("Creating ContextResolver for types: " + types.toString());
+    log("Creating ContextResolver for types: " + types.toString());
     return new ContextResolver<JAXBContext>() {
       @Override
       public JAXBContext getContext(Class type) {
@@ -243,7 +246,9 @@ public abstract class AbstractNBHelper {
     Client client = Client.create(config);
     client.addFilter(new HTTPBasicAuthFilter(getConfig().getUsername(),
         getConfig().getPassword()));
-    client.addFilter(new LoggingFilter(System.out));
+    if (getConfig().isVerbose()) {
+      client.addFilter(new LoggingFilter(System.out));
+    }
     return client.resource(getConfig().getAdminUrl()).path(getBaseUrl() + u);
   }
 
@@ -258,15 +263,13 @@ public abstract class AbstractNBHelper {
     public Property deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException
     {
-      //System.out.println(jp.getCurrentName() + " " + jp.getCurrentToken());
-      //jp.nextValue();
       String typeName = jp.getCurrentName();
       Class cls = getClassForType(typeName);
       System.out.println("Resolved property type " + typeName + " to " + cls);
       if (cls == null) {
         return null;
       }
-      return (Property)jp.readValueAs(cls);
+      return (Property) jp.readValueAs(cls);
     }
 
   }

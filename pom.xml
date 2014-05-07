@@ -11,6 +11,7 @@
   <modules>
     <module>rest.clientgen</module>
     <module>rest.client</module>
+    <module>examples</module>
   </modules>
 
 </project>
